@@ -10,7 +10,6 @@ import net.assignment.itms.utils.Status;
 @AllArgsConstructor
 public class UpdateStatusDto {
     private Long issue_id;
-    private Long user_id;
     private Status status;
     private String comment;
 }

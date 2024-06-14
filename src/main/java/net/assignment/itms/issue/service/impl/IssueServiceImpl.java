@@ -51,11 +51,12 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
-    public String assignIssueToDeveloper(User assignee, Long issue_id) throws NotFoundException {
+    public String assignIssueToDeveloper(User assignee, User reporter, Long issue_id) throws NotFoundException {
         Issue issue = issueRepository.findById(issue_id)
                 .orElseThrow(() -> new NotFoundException("Issue not found"));
 
         issue.setAssignee(assignee);
+        issue.setReporter(reporter);
         issueRepository.save(issue);
 
         return "Developer assigned successfully to issue";

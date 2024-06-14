@@ -15,7 +15,7 @@ public interface IssueService {
     List<IssueDetailDto> findAllIssues();
     String createIssue(IssueDto issueDto) throws BadRequestException;
 
-    String assignIssueToDeveloper(User assignee, Long issue_id) throws NotFoundException;
+    String assignIssueToDeveloper(User assignee, User reporter, Long issue_id) throws NotFoundException;
 
     String updateIssueStatus(UpdateStatusDto updateStatusDto, User user) throws BadRequestException, NotFoundException;
     Issue findById(Long issue_id) throws NotFoundException;

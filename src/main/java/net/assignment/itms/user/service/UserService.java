@@ -18,4 +18,6 @@ public interface UserService {
     AuthenticationResponse authentication(AuthDto authDto);
     String activateUser(Long user_id) throws NotFoundException;
     String deleteUser(Long user_id) throws NotFoundException;
+
+    User findUserByEmail(String email);
 }

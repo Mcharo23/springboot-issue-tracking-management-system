@@ -32,7 +32,6 @@ public class IssueDto {
 
     private Status status;
 
-    private Long reporter_id;
     private User reporter;
 
     private Long assignee_id;

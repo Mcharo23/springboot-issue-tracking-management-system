@@ -113,4 +113,10 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         return "User " + (user.getIs_deleted() ? "deleted " : "activated ") + "successfully";
     }
+
+    @Override
+    public User findUserByEmail(String email) {
+
+        return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+    }
 }

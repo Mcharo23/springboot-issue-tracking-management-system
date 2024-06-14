@@ -1,11 +1,17 @@
 package net.assignment.itms.user.controller;
 
+import net.assignment.itms.exception.BadRequestException;
 import net.assignment.itms.exception.NotFoundException;
 import net.assignment.itms.user.dto.DetailedUserDto;
+import net.assignment.itms.user.dto.UserDto;
+import net.assignment.itms.user.dto.UserIdDto;
 import net.assignment.itms.user.service.impl.UserServiceImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -15,8 +21,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/user")
 public class UserController {
-    @Autowired
-    UserServiceImpl userService;
+    private final PasswordEncoder passwordEncoder;
+    private final UserServiceImpl userService;
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
+    public UserController(PasswordEncoder passwordEncoder, UserServiceImpl userService) {
+        this.passwordEncoder = passwordEncoder;
+        this.userService = userService;
+    }
 
     @GetMapping
     public ResponseEntity<List<DetailedUserDto>> getAllUsers() {
@@ -24,11 +36,29 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    @PutMapping("/{user_id}/activate")
-    public ResponseEntity<Map<String, String>> activateUser(@PathVariable Long user_id) {
+    @PostMapping
+    public ResponseEntity<Map<String, String>> createUser(@RequestBody UserDto userDto) {
+        try {
+            userDto.setPassword(passwordEncoder.encode(userDto.getLast_name().toUpperCase()));
+
+            String message = userService.createUser(userDto);
+
+            Map<String, String> map = new HashMap<>();
+            map.put("detail", message);
+            return new ResponseEntity<>(map, HttpStatus.CREATED);
+        } catch (BadRequestException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("detail", e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PutMapping
+    public ResponseEntity<Map<String, String>> activateUser(@RequestBody UserIdDto userIdDto) {
+
         Map<String, String> map = new HashMap<>();
         try {
-            String result = userService.activateUser(user_id);
+            String result = userService.activateUser(userIdDto.getUser_id());
 
             map.put("detail", result);
 
@@ -39,12 +69,13 @@ public class UserController {
         }
     }
 
-    @PutMapping("/{user_id}/delete")
-    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long user_id) {
+    @DeleteMapping
+    public ResponseEntity<Map<String, String>> deleteUser(@RequestBody UserIdDto userIdDto) {
+        //logger.info("Received authentication request: {}", userIdDto.getUser_id());
         Map<String, String> map = new HashMap<>();
 
         try {
-            String result = userService.deleteUser(user_id);
+            String result = userService.deleteUser(userIdDto.getUser_id());
             map.put("detail", result);
 
             return ResponseEntity.ok(map);

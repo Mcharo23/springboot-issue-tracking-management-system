@@ -3,6 +3,7 @@ package net.assignment.itms.config;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import net.assignment.itms.user.entity.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,13 +14,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-import javax.crypto.SecretKey;
-import java.util.Base64;
 
 @Service
 public class JwtService {
-    private static final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    private static final String BASE64_SECRET_KEY = Base64.getEncoder().encodeToString(SECRET_KEY.getEncoded());
+    private static final String SECRET_KEY = "76326477657e3c534b705849245f623722375f3f623d62732645783b2d";
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -77,8 +75,12 @@ public class JwtService {
                 .getBody();
     }
 
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
+    }
+
     private Key getSignInKey() {
-        byte[] keyBytes = Base64.getDecoder().decode(BASE64_SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }
