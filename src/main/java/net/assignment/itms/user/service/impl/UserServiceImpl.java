@@ -3,6 +3,7 @@ package net.assignment.itms.user.service.impl;
 import net.assignment.itms.config.JwtService;
 import net.assignment.itms.exception.BadRequestException;
 import net.assignment.itms.exception.NotFoundException;
+import net.assignment.itms.issue.dto.UpdateUserPassword;
 import net.assignment.itms.user.dto.AuthDto;
 import net.assignment.itms.user.dto.DetailedUserDto;
 import net.assignment.itms.user.dto.UserDto;
@@ -17,10 +18,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -32,11 +35,13 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(AuthenticationManager authenticationManager, UserRepository userRepository, JwtService jwtService) {
+    public UserServiceImpl(AuthenticationManager authenticationManager, UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -118,5 +123,29 @@ public class UserServiceImpl implements UserService {
     public User findUserByEmail(String email) {
 
         return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+    }
+
+    @Override
+    public Map<String, String> updateUserPassword(String email, UpdateUserPassword updateUserPassword) throws Exception {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+
+            if (!passwordEncoder.matches(updateUserPassword.getOld_password(), user.getPassword())) {
+                throw new Exception("Invalid password");
+            }
+
+            if (passwordEncoder.matches(updateUserPassword.getNew_password(), user.getPassword())) {
+                return Map.of("detail", "Old password and new password are identical");
+            }
+
+            user.setPassword(passwordEncoder.encode(updateUserPassword.getNew_password()));
+            userRepository.save(user);
+
+            return Map.of("detail", "Successfully updated password");
+        } else {
+            throw new Exception("User not found");
+        }
     }
 }

@@ -1,10 +1,14 @@
 package net.assignment.itms.user.controller;
 
+import net.assignment.itms.config.JwtService;
+import net.assignment.itms.config.SecurityUtils;
 import net.assignment.itms.exception.BadRequestException;
 import net.assignment.itms.exception.NotFoundException;
+import net.assignment.itms.issue.dto.UpdateUserPassword;
 import net.assignment.itms.user.dto.DetailedUserDto;
 import net.assignment.itms.user.dto.UserDto;
 import net.assignment.itms.user.dto.UserIdDto;
+import net.assignment.itms.user.entity.User;
 import net.assignment.itms.user.service.impl.UserServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +27,13 @@ import java.util.Map;
 public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final UserServiceImpl userService;
+    private final JwtService jwtService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    public UserController(PasswordEncoder passwordEncoder, UserServiceImpl userService) {
+    public UserController(PasswordEncoder passwordEncoder, UserServiceImpl userService, JwtService jwtService) {
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
+        this.jwtService = jwtService;
     }
 
     @GetMapping
@@ -83,5 +89,25 @@ public class UserController {
             map.put("detail", e.getMessage());
             return new ResponseEntity<>(map, HttpStatus.NOT_FOUND);
         }
+    }
+
+    @PatchMapping
+    public ResponseEntity<Map<String, String>> updateUserPassword(@RequestBody UpdateUserPassword updateUserPassword) {
+
+        try {
+            String email = SecurityUtils.getAuthenticatedUserEmail(jwtService);
+            Map<String, String> result = userService.updateUserPassword(email, updateUserPassword);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            if (e.getMessage().equals("User not found")) {
+                return ResponseEntity.status(404).body(Map.of("detail", "User not found"));
+            } else if (e.getMessage().equals("Invalid password")) {
+                return ResponseEntity.status(404).body(Map.of("detail", "Wrong old password"));
+            } else {
+                return ResponseEntity.status(400).body(Map.of("detail", e.getMessage()));
+            }
+        }
+
     }
 }
